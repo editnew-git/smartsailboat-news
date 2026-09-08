@@ -1,0 +1,71 @@
+---
+import { getCollection } from 'astro:content';
+import SiteLayout from '../../layouts/SiteLayout.astro';
+import { getPublicAsset } from '../../lib/publicAsset';
+import { TOPICS } from '../../lib/topics';
+
+const posts = (await getCollection('news', ({ data }) => !data.draft))
+  .sort((a, b) => new Date(b.data.date).getTime() - new Date(a.data.date).getTime());
+const formatDate = (date: string) => new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric' }).format(new Date(`${date}T12:00:00`));
+---
+
+<SiteLayout title="Stories | Smart Sail Boat Deck" description="Browse selected Smart Sail Boat project, vessel, system, refit, voyage, safety, and security stories.">
+  <section class="browse-hero"><div class="shell"><p class="eyebrow">The public journal</p><h1 class="page-title">Stories from the deck.</h1><p class="browse-lead">Search the journal or filter it by the kind of work happening aboard, ashore, and underway.</p></div></section>
+  <section class="shell browser" id="story-browser" aria-label="Story browser">
+    <aside class="filters">
+      <label for="story-search">Search stories</label>
+      <input class="search-input" id="story-search" name="q" type="search" placeholder="Vessel, system, voyage…" autocomplete="off" />
+      <ul class="filter-list" aria-label="Story topics">
+        <li><button class="filter-button" type="button" data-topic="all" aria-pressed="true">All stories</button></li>
+        {TOPICS.map((topic) => <li><button class="filter-button" type="button" data-topic={topic.slug} aria-pressed="false">{topic.label}</button></li>)}
+      </ul>
+    </aside>
+    <div>
+      <div class="result-head"><h2>Published stories</h2><span class="result-count" id="result-count">{posts.length} published</span></div>
+      {posts.length > 0 ? <div class="browse-list" id="story-results">{posts.map((post) => { const image = getPublicAsset(post.data.image); const searchable = [post.data.title, post.data.excerpt, post.data.topic.label, post.data.vessel, ...post.data.tags].filter(Boolean).join(' ').toLowerCase(); return <a class="story-card" href={`/stories/${post.data.slug}/`} data-story data-topic={post.data.topic.slug} data-search={searchable}><div class="story-image" style={image ? `background-image:url("${image}")` : undefined}></div><div class="story-copy"><div class="badge-row"><span class="badge">{post.data.topic.label}</span>{post.data.vessel && <span class="badge badge--outline">{post.data.vessel}</span>}</div><h2>{post.data.title}</h2>{post.data.excerpt && <p>{post.data.excerpt}</p>}<div class="card-foot"><span>{formatDate(post.data.date)}</span><span>Read ↗</span></div></div></a>; })}</div> : <div class="empty-state"><h2>No stories published yet.</h2><p>The first reviewed entry will appear here after it completes the Pressly approval workflow.</p></div>}
+      <p class="no-results" id="no-results" hidden>No stories match that search. Try another phrase or topic.</p>
+    </div>
+  </section>
+</SiteLayout>
+
+<script>
+  const search = document.querySelector<HTMLInputElement>('#story-search');
+  const buttons = [...document.querySelectorAll<HTMLButtonElement>('[data-topic]')];
+  const stories = [...document.querySelectorAll<HTMLElement>('[data-story]')];
+  const count = document.querySelector('#result-count');
+  const noResults = document.querySelector<HTMLElement>('#no-results');
+  const params = new URLSearchParams(window.location.search);
+  let activeTopic = params.get('topic') ?? 'all';
+  if (!buttons.some((button) => button.dataset.topic === activeTopic)) activeTopic = 'all';
+  if (search) search.value = params.get('q') ?? '';
+
+  function updateResults() {
+    const query = search?.value.trim().toLowerCase() ?? '';
+    let visible = 0;
+    stories.forEach((story) => {
+      const matchesTopic = activeTopic === 'all' || story.dataset.topic === activeTopic;
+      const matchesSearch = !query || story.dataset.search?.includes(query);
+      story.hidden = !(matchesTopic && matchesSearch);
+      if (!story.hidden) visible += 1;
+    });
+    buttons.forEach((button) => button.setAttribute('aria-pressed', String(button.dataset.topic === activeTopic)));
+    if (count) count.textContent = `${visible} ${visible === 1 ? 'story' : 'stories'}`;
+    if (noResults) noResults.hidden = visible !== 0 || stories.length === 0;
+  }
+
+  buttons.forEach((button) => button.addEventListener('click', () => {
+    activeTopic = button.dataset.topic ?? 'all';
+    const url = new URL(window.location.href);
+    if (activeTopic === 'all') url.searchParams.delete('topic'); else url.searchParams.set('topic', activeTopic);
+    window.history.replaceState({}, '', url);
+    updateResults();
+  }));
+  search?.addEventListener('input', () => {
+    const url = new URL(window.location.href);
+    const query = search.value.trim();
+    if (query) url.searchParams.set('q', query); else url.searchParams.delete('q');
+    window.history.replaceState({}, '', url);
+    updateResults();
+  });
+  updateResults();
+</script>

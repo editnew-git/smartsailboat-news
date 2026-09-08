@@ -1,0 +1,44 @@
+---
+import { getCollection, render } from 'astro:content';
+import SiteLayout from '../../layouts/SiteLayout.astro';
+import { getPublicAsset } from '../../lib/publicAsset';
+
+export async function getStaticPaths() {
+  const posts = await getCollection('news', ({ data }) => !data.draft);
+  return posts.map((post) => ({ params: { slug: post.data.slug }, props: { post } }));
+}
+
+const { post } = Astro.props;
+const { Content } = await render(post);
+const articleImage = getPublicAsset(post.data.image);
+const posts = await getCollection('news', ({ data }) => !data.draft);
+const related = posts
+  .filter((candidate) => candidate.id !== post.id)
+  .map((candidate) => ({
+    post: candidate,
+    score: (candidate.data.topic.slug === post.data.topic.slug ? 10 : 0)
+      + (candidate.data.vessel && candidate.data.vessel === post.data.vessel ? 6 : 0)
+      + candidate.data.tags.filter((tag) => post.data.tags.includes(tag)).length,
+  }))
+  .filter(({ score }) => score > 0)
+  .sort((a, b) => b.score - a.score || new Date(b.post.data.date).getTime() - new Date(a.post.data.date).getTime())
+  .slice(0, 3)
+  .map(({ post: relatedPost }) => relatedPost);
+const formatDate = (date: string) => new Intl.DateTimeFormat('en-US', { month: 'long', day: 'numeric', year: 'numeric' }).format(new Date(`${date}T12:00:00`));
+---
+
+<SiteLayout title={`${post.data.title} | Smart Sail Boat Deck`} description={post.data.excerpt} image={articleImage}>
+  <article>
+    <header class="article-header"><div class="shell">
+      <div class="breadcrumbs"><a href="/">Deck</a><span aria-hidden="true">/</span><a href="/stories/">Stories</a><span aria-hidden="true">/</span><span>{post.data.title}</span></div>
+      <div class="badge-row"><span class="badge">{post.data.topic.label}</span>{post.data.vessel && <span class="badge badge--outline">{post.data.vessel}</span>}</div>
+      <h1 class="article-title">{post.data.title}</h1>
+      {(post.data.subheadline || post.data.excerpt) && <p class="article-summary">{post.data.subheadline ?? post.data.excerpt}</p>}
+      <div class="article-meta"><span class="badge badge--outline">{formatDate(post.data.date)}</span>{post.data.location && <span class="badge badge--outline">{post.data.location}</span>}</div>
+    </div></header>
+    {articleImage && <img class="article-cover" src={articleImage} alt="" />}
+    <div class="article-body"><Content /></div>
+  </article>
+  <a class="back-link" href="/stories/">← Back to all stories</a>
+  {related.length > 0 && <section class="shell section" aria-labelledby="related-title"><div class="section-head"><div><p class="eyebrow">Keep reading</p><h2 id="related-title">Related stories.</h2></div></div><div class="story-grid">{related.map((item) => { const image = getPublicAsset(item.data.image); return <a class="story-card" href={`/stories/${item.data.slug}/`}><div class="story-image" style={image ? `background-image:url("${image}")` : undefined}></div><div class="story-copy"><div class="badge-row"><span class="badge">{item.data.topic.label}</span>{item.data.vessel && <span class="badge badge--outline">{item.data.vessel}</span>}</div><h3>{item.data.title}</h3>{item.data.excerpt && <p>{item.data.excerpt}</p>}</div></a>; })}</div></section>}
+</SiteLayout>
