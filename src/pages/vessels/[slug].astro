@@ -1,0 +1,21 @@
+---
+import { getCollection } from 'astro:content';
+import SiteLayout from '../../layouts/SiteLayout.astro';
+import { getPublicVessels } from '../../lib/vessels';
+import { getPublicAsset } from '../../lib/publicAsset';
+export async function getStaticPaths() {
+  return getPublicVessels(await getCollection('news')).map((vessel) => ({ params: { slug: vessel.slug }, props: { vessel } }));
+}
+const { vessel } = Astro.props;
+const image = getPublicAsset(vessel.profile.data.image);
+const latest = vessel.stories[0];
+const formatDate = (date: string) => new Intl.DateTimeFormat('en-US', { month: 'long', day: 'numeric', year: 'numeric' }).format(new Date(`${date}T12:00:00`));
+---
+<SiteLayout title={`${vessel.name} | Smart Sail Boat Deck`} description={vessel.profile.data.excerpt} image={image}>
+  <header class="article-header"><div class="shell"><div class="breadcrumbs"><a href="/vessels/">Vessels</a><span>/</span><span>{vessel.name}</span></div><p class="eyebrow">Meet the vessel</p><h1 class="article-title">{vessel.name}</h1><p class="article-summary">{vessel.profile.data.excerpt}</p><p><a class="text-link" href={`/stories/${vessel.profile.data.slug}/`}>Read the introduction →</a></p></div></header>
+  {image && <img class="article-cover" src={image} alt="" />}
+  {latest && <section class="shell section"><div class="section-head"><div><p class="eyebrow">Latest chapter · Published {formatDate(latest.data.date)}</p><h2>{latest.data.title}</h2><p>{latest.data.excerpt}</p></div><a class="text-link" href={`/stories/${latest.data.slug}/`}>Read the update →</a></div></section>}
+  <section class="shell section" aria-labelledby="journal-title"><div class="section-head"><h2 id="journal-title">The story so far.</h2><a class="text-link" href={`/stories/?vessel=${vessel.slug}`}>Browse stories →</a></div>
+    {vessel.stories.length ? <ol class="vessel-timeline">{[...vessel.stories].reverse().map((post) => <li><time datetime={post.data.date}>Published {formatDate(post.data.date)}</time><h3><a href={`/stories/${post.data.slug}/`}>{post.data.title}</a></h3><p>{post.data.excerpt}</p></li>)}</ol> : <p class="browse-lead">The introduction is the first chapter. Future updates will appear here.</p>}
+  </section>
+</SiteLayout>

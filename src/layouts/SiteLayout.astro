@@ -45,6 +45,7 @@ const socialImage = new URL(image, Astro.site);
         </a>
         <nav aria-label="Primary navigation">
           <a href="/">Home</a>
+          <a href="/vessels/">Vessels</a>
           <a href="/stories/">Stories</a>
           <a href="https://smartsailboat.com/" target="_blank" rel="noreferrer">Main site <span aria-hidden="true">↗</span></a>
         </nav>
@@ -118,6 +119,11 @@ const socialImage = new URL(image, Astro.site);
   .text-link:hover { color: var(--blue); }
 
   .story-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; }
+  .vessel-timeline { padding-left: 1.4rem; border-left: 2px solid var(--line); list-style: none; }
+  .vessel-timeline li { padding: 0 0 2rem 1rem; }
+  .vessel-timeline time { color: var(--muted); font-size: .8rem; }
+  .vessel-timeline h3 { margin: .6rem 0; }
+  .vessel-timeline p { color: var(--muted); line-height: 1.6; }
   .story-card { min-height: 24rem; display: flex; flex-direction: column; overflow: hidden; border: 1px solid var(--line); border-radius: 1rem; background: var(--panel); box-shadow: 0 1px 0 rgba(1,54,80,.04); text-decoration: none; transition: transform .2s ease, border-color .2s ease, box-shadow .2s ease; }
   .story-card:hover { transform: translateY(-4px); border-color: #8fcfe6; box-shadow: var(--shadow); }
   .story-image { height: 12rem; background: linear-gradient(135deg, var(--navy), #087da6); background-position: center; background-size: cover; }

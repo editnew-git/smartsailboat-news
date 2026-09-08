@@ -1,0 +1,13 @@
+---
+import type { getPublicVessels } from '../lib/vessels';
+import { getPublicAsset } from '../lib/publicAsset';
+interface Props { vessels: ReturnType<typeof getPublicVessels> }
+const { vessels } = Astro.props;
+---
+<div class="story-grid">{vessels.map((vessel) => {
+  const image = getPublicAsset(vessel.profile.data.image);
+  return <a class="story-card" href={`/vessels/${vessel.slug}/`}>
+    {image && <div class="story-image" style={`background-image:url("${image}")`}></div>}
+    <div class="story-copy"><p class="eyebrow">Meet the vessel</p><h3>{vessel.name}</h3><p>{vessel.profile.data.excerpt}</p><div class="card-foot"><span>{vessel.stories.length} updates</span><span>Follow the story ↗</span></div></div>
+  </a>;
+})}</div>

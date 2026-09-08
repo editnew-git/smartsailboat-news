@@ -1,0 +1,13 @@
+---
+import { getCollection } from 'astro:content';
+import SiteLayout from '../../layouts/SiteLayout.astro';
+import VesselCards from '../../components/VesselCards.astro';
+import { getPublicVessels } from '../../lib/vessels';
+const vessels = getPublicVessels(await getCollection('news'));
+---
+<SiteLayout title="Vessels | Smart Sail Boat Deck" description="Meet the vessels behind Smart Sail Boat and follow their stories.">
+  <section class="browse-hero"><div class="shell"><p class="eyebrow">The boats behind the work</p><h1 class="page-title">Follow a vessel.</h1><p class="browse-lead">Get to know each boat, then follow its refits, systems work, and experiences underway.</p></div></section>
+  <section class="shell section" aria-label="Vessels">
+    {vessels.length ? <VesselCards vessels={vessels} /> : <div class="empty-state"><h2>Meet the boats soon.</h2><p>Vessel introductions and their first chapters will appear here as they are published.</p></div>}
+  </section>
+</SiteLayout>
