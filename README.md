@@ -15,6 +15,19 @@ npm run build
 npm run dev
 ```
 
+## Dokploy deployment
+
+- Source: `editnew-git/smartsailboat-news`, branch `main`
+- Build type: static
+- Install/build command: `npm ci && npm run build`
+- Publish directory: `dist`
+- Domain: `deck.smartsailboat.com`
+- Container port: `80`
+
+The VPS Caddy edge already routes `deck.smartsailboat.com` to Dokploy's Traefik
+service. The DNS record must point the hostname to the same VPS as `news.wwds.co`
+before Caddy can issue its certificate.
+
 ## Publishing contract
 
 - Every published entry needs at least one canonical topic tag: `project-update`,
